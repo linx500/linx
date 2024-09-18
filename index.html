@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset='utf-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LINX</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            box-sizing: border-box; /* 박스 사이징 설정 */
+        }
+
+        *, *::before, *::after {
+            box-sizing: inherit; /* 모든 요소에 box-sizing 적용 */
+        }
+
+        #wrap {
+            width: 100vw; /* 전체 화면 너비 */
+            height: 100vh; /* 전체 화면 높이 */
+            overflow-y: scroll; /* 세로 스크롤 허용 */
+            scroll-snap-type: y mandatory; /* 스크롤 스냅 활성화 */
+        }
+
+        .page {
+            scroll-snap-align: start; /* 페이지 시작 부분에서 스냅 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw; /* 전체 화면 너비 */
+            height: 100vh; /* 전체 화면 높이 */
+            font-size: 50px;
+            box-sizing: border-box;
+            color: #fff;
+            position: relative;
+        }
+
+        .title {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+            text-align: center;
+            z-index: 2;
+        }
+
+        /* 각 페이지의 배경색 */
+        #page1 { background:black; }
+        #page2 { background:gray; }
+        #page3 { background:brown; }
+        #page4 { background:green; }
+        #page5 { background:navy; }
+        #page6 { background:purple; }
+        #page7 { background:darkblue; }
+
+        .section {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slidewrap {
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .slidelist {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            height: 100%;
+            width: 700%; /* 슬라이드 개수에 따라 너비 조정 */
+        }
+
+        .slideitem {
+            flex: 0 0 14.2857%; /* 각 슬라이드가 14.2857% 너비를 차지하도록 설정 */
+            height: 100%; /* 슬라이드 높이 맞추기 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        /* 슬라이드 이미지 */
+        .section input[id$="-1"]:checked ~ .slidewrap .slidelist { transform: translateX(0); }
+        .section input[id$="-2"]:checked ~ .slidewrap .slidelist { transform: translateX(-14.2857%); }
+        .section input[id$="-3"]:checked ~ .slidewrap .slidelist { transform: translateX(-28.5714%); }
+        .section input[id$="-4"]:checked ~ .slidewrap .slidelist { transform: translateX(-42.8571%); }
+        .section input[id$="-5"]:checked ~ .slidewrap .slidelist { transform: translateX(-57.1429%); }
+        .section input[id$="-6"]:checked ~ .slidewrap .slidelist { transform: translateX(-71.4286%); }
+        .section input[id$="-7"]:checked ~ .slidewrap .slidelist { transform: translateX(-85.7143%); }
+        .section input[id$="-8"]:checked ~ .slidewrap .slidelist { transform: translateX(-100%); }
+        .section input[id$="-9"]:checked ~ .slidewrap .slidelist { transform: translateX(-114.2857%); }
+        .section input[id$="-10"]:checked ~ .slidewrap .slidelist { transform: translateX(-128.5714%); }
+
+        /* 좌우 슬라이드 버튼 */
+        .slide-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .left-button {
+            left: 200px; /* 사진의 왼쪽 끝에서 20픽셀 */
+            background-image: url('./img/left.png');
+        }
+
+        .right-button {
+            right: 200px; /* 사진의 오른쪽 끝에서 20픽셀 */
+            background-image: url('./img/right.png');
+        }
+
+        /* 슬라이드 텍스트 */
+        .textbox {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            z-index: 2;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 24px;
+            white-space: nowrap;
+        }
+
+        /* 페이징 */
+        .slide-pagelist {
+            text-align: center;
+            padding: 20px;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .slide-pagelist > li {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .slide-pagelist > li > label {
+            display: block;
+            padding: 8px 15px;
+            border-radius: 30px;
+            background: #ccc;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        /* 이미지 크기 조정 */
+        img {
+            width: 100%; /* 너비 100% */
+            height: 100%; /* 높이 100% */
+            object-fit: cover; /* 비율 유지하며 잘림 */
+            display: block; /* 블록 요소로 설정하여 중앙 정렬 */
+            margin: 0 auto; /* 중앙 정렬 */
+        }
+
+        body {
+            -ms-overflow-style: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        .telegram {
+            position: fixed;
+            top: 20px; /* 상단에서 20px */
+            right: 20px; /* 우측에서 20px */
+            width: 50px; /* 아이콘 너비 */
+            height: 50px; /* 아이콘 높이 */
+            background-image: url('./img/telegram.png'); /* 텔레그램 아이콘 이미지 경로 */
+            background-size: cover; /* 아이콘 크기 조정 */
+            cursor: pointer; /* 커서 포인터로 변경 */
+            z-index: 100; /* 다른 요소 위에 표시 */
+        }
+
+		.downloader163 {
+            position: fixed;
+            top: 20px; /* 상단에서 20px */
+            right: 170px; /* 우측에서 20px */
+            width: 50px; /* 아이콘 너비 */
+            height: 50px; /* 아이콘 높이 */
+            background-image: url('./img/163.png'); /* 텔레그램 아이콘 이미지 경로 */
+            background-size: cover; /* 아이콘 크기 조정 */
+            cursor: pointer; /* 커서 포인터로 변경 */
+            z-index: 100; /* 다른 요소 위에 표시 */
+        }
+
+		.downloader20 {
+            position: fixed;
+            top: 20px; /* 상단에서 20px */
+            right: 90px; /* 우측에서 20px */
+            width: 50px; /* 아이콘 너비 */
+            height: 50px; /* 아이콘 높이 */
+            background-image: url('./img/20.png'); /* 텔레그램 아이콘 이미지 경로 */
+            background-size: cover; /* 아이콘 크기 조정 */
+            cursor: pointer; /* 커서 포인터로 변경 */
+            z-index: 100; /* 다른 요소 위에 표시 */
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            z-index: 100;
+        }
+
+        .sidebar button {
+            display: block;
+            margin: 10px 0;
+            padding: 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .sidebar button:hover {
+            background-color: #555;
+        }
+		
+		.notification {
+			position: absolute;
+			font-size: 16px; /* 원하는 글자 크기로 조정 */
+			color: #000; /* 검은색으로 변경 */
+			top: 20px;
+			left: 20px;
+			background: #fff; /* 흰색으로 변경 */
+			padding: 10px;
+			border-radius: 5px;
+			box-shadow: 0 3px 3px rgba(0, 0, 0, 0.3);
+			z-index: 10;
+		}
+
+		#page1, #page2, #page3, #page4, #page5, #page6, #page7, #page8, #page9{
+			background: black;
+		}
+
+		 .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* 5열로 설정 */
+            gap: 30px; /* 이미지 간의 간격 */
+        }
+        img {
+            width: 100%; /* 이미지 너비를 부모 요소에 맞춤 */
+            height: auto; /* 비율 유지 */
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="telegram" onclick="window.open('https://t.me/LINX500', '_blank');"></div>
+<div class="downloader20" onclick="window.open('https://drive.usercontent.google.com/u/0/uc?id=1aaGgDSghUPZS2ldT3wHwkyZaM-RyLME4&export=download', '_blank');"></div>
+<div class="downloader163" onclick="window.open('https://drive.usercontent.google.com/u/0/uc?id=1R13yf0cds4QvTWukPHzUED_9OgXdSb7T&export=download', '_blank');"></div>
+
+<div class="sidebar">
+    <button onclick="scrollToPage('page1')">기본 이미지</button>
+    <button onclick="scrollToPage('page2')">커스텀 이미지</button>
+    <button onclick="scrollToPage('page3')">동영상 이미지</button>
+    <button onclick="scrollToPage('page4')">공지 이미지</button>
+    <button onclick="scrollToPage('page5')">회선 이미지</button>
+    <button onclick="scrollToPage('page6')">해상도 이미지</button>
+    <button onclick="scrollToPage('page7')">접속기 기능</button>
+	<button onclick="scrollToPage('page8')">미니미</button>
+	<button onclick="scrollToPage('page9')">업데이트 노트</button>
+</div>
+
+<div id="wrap">
+    <div class="page" id="page1">
+	<div class="notification">
+		<div id="announcement">★★★로컬전용 테스트 접속기를 다운받아 테스트 하실 수 있습니다▶▷▶<br>1.63/2.0(기본형1~3,커스텀,동영상)접속기 제작 가능합니다.(버전은 차례로 업데이트될 예정입니다.)<br>★칼렉,길렉 / 리소스 암호화 / Sprite.PAK 2GB 해제 / 접속기 자동 업데이트 / 게임가드 적용 되었습니다.<br>크롬 기준 휠로 화면사이즈100%로 마췄을때 실제 접속기 사이즈입니다.</div>
+	</div>
+        <div class="title">기본 이미지</div>
+        <div class="section">
+            <input type="radio" name="slide1" id="slide1-1" checked>
+            <input type="radio" name="slide1" id="slide1-2">
+            <input type="radio" name="slide1" id="slide1-3">
+            <input type="radio" name="slide1" id="slide1-4">
+            <input type="radio" name="slide1" id="slide1-5">
+            <input type="radio" name="slide1" id="slide1-6">
+            <input type="radio" name="slide1" id="slide1-7">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhY7M_V6qM5bDswrg0F8Br3vFmPcZfOa2k1efu1RNmEyUnwaCLypRL8HsgEXUAKxVGVCskAsCyuBlQMZqtNAOs2Cf4h8QYDe4P9RnusAr_xdPxf47MVl8c7hcnZSq2KcI0BazkSmnLPD87Tpj19x_zKdUhjB4y96Gcs61dp7Uqg3pMTF7L2PTjXEEeWGZyq/s750/1.gif">
+                            <div class="textbox">
+                                <h3>기본형-1-제작가능(사이즈중)</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/a/AVvXsEiqRq2qNsFp2cP5ze0ZuxPIdE8JPOE9UNrXmiI710mAU_MmqVWfBmfVVrOAfnznfVOSilNdJQZBwNdK1bB_I4YFXKPRTsinCEmUr_6O081H1eFX6s3wFMEGmlvHteUvArzr4iPHeneAvtzcB7-c48LFiO_ZVea0eftp0EyAUutsjogXAaWyJLkpGXudML7F">
+                            <div class="textbox">
+                                <h3>기본형-제작가능(사이즈대)-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjpCGVR7RqG7868cAZ0VhmCktSttZtGZGs2g9jx0sm-p9P21gdjm3BTleRpEG8NKHWX1QuUO2RduF4UGMFP78DtU0KOPqtytK6WV9RTXo-K9fK8ckLug_TCiH9OviGyxOHRFmzTOn1GwfSYEuYf_JQt6b6TYO_VTEB3QNbLlGhEzU2L50t95Ty8FMIjr99O/s690/.3%EA%B8%B0%EB%B3%B8%ED%88%B4.gif">
+                            <div class="textbox">
+                                <h3>기본형-3-제작가능 (사이즈중)</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi0XJgQ7OCC92Gba0v5-N_HWTGtkx9Il1TqI7r-T7bi-4956lD46w7F_BdlvoopiFFbcxSy9M6p0ac_V0OcGckvUJxWFovCK_4jzys5u67v7lNELbIXPm3PTwfFmSuci62hJwgfpoRDE9R2764IHb8YstFg_rinedCLwAUAmASXQIS4kIvKfpsUX5Aeqx5i/s832/4.png">
+                            <div class="textbox">
+                                <h3>기본형-4-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh9AXTsnZeRnawfVecObgt169KVtf564iMFQM5UkZt_ofmM62gu2VSQo_1aFrAx8Nm5mJ4phuuFbB_67TAcNVYJSGaV44znkMFQvbog4KvsRkoKiJcp84U1S57zGA7-w63XDRa4_fJaqK_CNT6FIWF6IYHrKeOOfpsC2YIAnFnBGQZaZpdeD35If-JGFV4U/s575/5.png">
+                            <div class="textbox">
+                                <h3>기본형-5-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjxrICfnHjLzyurMFD7JPYW_vY5-XzWp6EfjExm4gQ45j4UFuqEW_v9E5eXAkl0wOPauxd2iqLqTMfIlXWk8pnfkNx97gdLsB9lAhJR29cPDWpipUCFKNdlyTYk2Mn8o2jVe3QvBmmSe8N6Qlen46LW9rBSoAVNyzGguzOqAYzk0A1PWoZ1BWur2TSB937V/s860/6.png">
+                            <div class="textbox">
+                                <h3>기본형-6-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhn9zb8B9pFTc3qCC2o9-S78xzgJMz2oYditbHBQ7uJblujwW8D9b_yGikP-sLlq7rSrTF2EBnt0iSo-SbcQhYRb0F6OYwSa-DoT1yjkSwLMKNLdz9i58t-eIk1VOXOmqPPI59rNIVepPRtyqEvwAH18WodgD4CQXQMVeRnSUtPD9b4oIAq-qPnY5iT8lIR/s861/3.png">
+                            <div class="textbox">
+                                <h3>기본형-7-</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button" onclick="moveSlide('slide1', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide1', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide1-1"></label></li>
+                    <li><label for="slide1-2"></label></li>
+                    <li><label for="slide1-3"></label></li>
+                    <li><label for="slide1-4"></label></li>
+                    <li><label for="slide1-5"></label></li>
+                    <li><label for="slide1-6"></label></li>
+                    <li><label for="slide1-7"></label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page2">
+	<div class="notification">
+		<div id="announcement">커스텀 접속기는 어떠한 모양도 가능합니다.<br>직접 이미지 주시면 해당 그림으로 제작도 가능합니다.<br>아이콘도 커스텀 가능합니다. 원하는 이미지 사진 보내주시면 적용해드립니다.</div>
+	</div>
+        <div class="title">커스텀 이미지</div>
+        <div class="section">
+            <input type="radio" name="slide2" id="slide2-1" checked>
+            <input type="radio" name="slide2" id="slide2-2">
+            <input type="radio" name="slide2" id="slide2-3">
+            <input type="radio" name="slide2" id="slide2-4">
+            <input type="radio" name="slide2" id="slide2-5">
+            <input type="radio" name="slide2" id="slide2-6">
+            <input type="radio" name="slide2" id="slide2-7">
+            <input type="radio" name="slide2" id="slide2-8">
+            <input type="radio" name="slide2" id="slide2-9">
+            <input type="radio" name="slide2" id="slide2-10">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgOvqP33cYcmG3Cel9CB_45Ut_fwWQOCr4X-VNQbN7HnNZsyygpj4RkLC7cQXzePXapTOUgATUOu2_B0TfxR2fm1t41FIKo8gOxFY_Uy8bMEM_kbveDZdvGblyDAu_Zi3cAUMF7pV2hQCIyVrgvdnro6IFu9JWi82QVt0Sth1Z6iOePdJqFG8LkaH5PR5AA/s850/8.gif">
+                            <div class="textbox">
+                                <h3>커스텀형-1-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg3l5VsjifI5WRvtfvNL4m28_IgJ5UcJ6M1jltezkxOu-EiM6gh5n4sDb1Cx7a2F54T0CEP6eGpHWENfhiJSdAo9Yun6H2ztZgoJ5SlEDz869YupbK1yUKKwO45iQrz88si-efMzHe4zpOOsXwy1-kXQkA86-VBmhnD5RezdEWTmHpdFf3TIYbDXrBbHj1F/s713/9.gif">
+                            <div class="textbox">
+                                <h3>커스텀형-2-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjprLx3x-tUTYpp8Gy8BMlOhmZxKyx3T22MbQUgk7lWdr7Y7vtCLNOcrPICShi9m1SfLmFJNq-BHIMZw4vBn_q4hcFT0IGHfFJhMIWgZicyyCbUy1EbvLx1OhAkAxfeUn49_XCgEgC-zTNCjiIgf4_TGw3GnpNWJ2swPCXXbw9klbK-DSYj6oWCP0OSRMdC/s791/10.gif">
+                            <div class="textbox">
+                                <h3>커스텀형-3-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgM1Baz9gD8jHH-sF7-_Zr6GDQddCtsRMfjaY74LxBGgKLumMAJgFt8WNm8fhJbYhmO7JI4VWO8UuqXIrhyphenhyphenO4fwRn1KHsjDx50W0i0hANbWPSZi2-PGPcOW2wfh1pYyqM-sjD1wEPSFW9brY8PwqHvI48NORxoZcuFLQG7snQwwBs5Q1FByayR1Hj40oO0k/s1012/11.PNG">
+                            <div class="textbox">
+                                <h3>커스텀형-4-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhRB85hocytRjEU_IOSpLFoYIFcmER_bJ8FlSZCrBwKRvCxI640DW6FLHRuXsFRqxQ-RuU6Jbmqk0SfkPCFFGdSzXnHx24ItYBVDSiDbRoxv0e_UQpVzq5CJHWXvKPlp76OaBzxKdCwDmw47QzN3a0QI5lw3NIlULX-w1L5jZlC-DlX2rcEHeZTZM_0CmJr/s626/12.png">
+                            <div class="textbox">
+                                <h3>커스텀형-5-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg6yKGiqsLTIuiivffxwCNeNSm9fb07ETa-_U8ioNyI9UOvhVF_otvk4ZJHoEd1t9BNmQqhjejSqrNuXw5xEXGJcJQ2bCCI43LPRH2SXftAOPak_7uHn-Em3XLCa2AumfE18kMHJL4o1wFV8fQGv_wA8d2I7dv-6QIOmcb8LV5hI7o5VcZjTvAC8OFrLvFj/s750/13.png">
+                            <div class="textbox">
+                                <h3>커스텀형-6-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjgYwQdH5oek6molsuxBFQdT_t_Q8UZM87TeTqUJFlxPOIeLXxxE2Vs0LghU9WyaQKuHWHuXwa_RXrXf-slbS7k-056lWwUTnVcS3dalLtrpWlJ-5hsYJ-xDvtwWZLcNtzNyRe7ZWN-m23cPlB8Ugq4-OkkbxaJheP97-qxWt_JsuAFqwAWwfUoARSaZ_Db/s1012/14.png">
+                            <div class="textbox">
+                                <h3>커스텀형-7-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiudD5cyXSCZiSCicIriDLDzrnUf-kIqjL5j4GEnOnDNeq4LL4Z3tDzeA-8P0jkmo85Z0X1bhDfudv3eZelyNNW2eYSqlu1gWpnbJN6QQYiHXTcnsm9YGsYt-6GME54Tv6iRR3v6M7cvIl4pkkVwDnpJMFGZnKA-sSnwGZ8beRN7XrfB9LJm-hToidpMiEW/s759/15.png">
+                            <div class="textbox">
+                                <h3>커스텀형-8-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg74mqmptqrrRjxZEDx_N251Mnyp67bgLswH4SD9zIFItGfvpWCLj7VBCbyuGrhX1mK41bIweHSNJ7EILGjpyxSe_badLOuwp8jxv4Ydt9R47d9Z2UJbO_WpJCfVN3W7UNx0iUYtOicbfFk36H6v1-sGmTM-8PXqZDz942_rSOklLAU89D8o-bRXiwXQVis/s720/16.png">
+                            <div class="textbox">
+                                <h3>커스텀형-9-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh2m55f9KlK4Y6VgaU-Jzs9uFjK7QzamQ90PDLTDGXYg_JkbM3dBjNhB7gkKubBFPNSYAEkOE2xavHwI0evEzs5JmVn4rH5axPd-kMvpQrBA7VURcrmWV_VZ_SEsvPHMtAmHwEC757miSu1HZRbLERyFHn3bhYAkbytlojZM_LaRx8l7GH42eBZdRCYODNO/s700/17.png">
+                            <div class="textbox">
+                                <h3>커스텀형-10-</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button" onclick="moveSlide('slide2', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide2', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide2-1"></label></li>
+                    <li><label for="slide2-2"></label></li>
+                    <li><label for="slide2-3"></label></li>
+                    <li><label for="slide2-4"></label></li>
+                    <li><label for="slide2-5"></label></li>
+                    <li><label for="slide2-6"></label></li>
+                    <li><label for="slide2-7"></label></li>
+                    <li><label for="slide2-8"></label></li>
+                    <li><label for="slide2-9"></label></li>
+                    <li><label for="slide2-10"></label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page3">
+	<div class="notification">
+		<div id="announcement">동영상에 들어갈 영상과 BGM파일을 미리 준비해주세요.<br>해당 영상을 편집하여 제작해드리겠습니다.<br>자막을 원하시면 자막내용도 준비해주세요.</div>
+	</div>
+        <div class="title">동영상 이미지</div>
+        <div class="section">
+            <input type="radio" name="slide3" id="slide3-1" checked>
+            <input type="radio" name="slide3" id="slide3-2">
+            <input type="radio" name="slide3" id="slide3-3">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj5i3ppwciLXbrSyljSQXfwib-gVW94c_AfWoca8ZeGB6AcTMeh8U6khYJEC3OyAnJTrlHtfo-Shjel1Hgzi2JOjnpav8KSkIMy2HgQHSUp01huPv_DEB5EYi-8D2159zz40oJHZeWusIIYCg3ls3zdptqxSDRe2LpfiVAlRIUshcNAYDbV7r2_3slJpREu/s750/18.gif">
+                            <div class="textbox">
+                                <h3>동영상 이미지는 기본형 이미지에 모두 적용 가능합니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEigP2xXhQRWi8MZziwKJWwKKNYqy3neMUWA5IB9w2AmoUk45KRFTdOZBE0Mh6K1boAP6-zI1kIo0J25DI40SK_BQIjPDFn3EkQkJmJIULceHzrnBUHcjKWs35tFoeFNqugmwuBCQhJAMzGj6blg5h9Bp1PDZetP9FoNTdmH6Q8RAcq_WefiiT7uB1H4eHFT/s690/19.gif">
+                            <div class="textbox">
+                                <h3>원하시는 기본형 이미지를 알려주시고 원하시는 영상을 보내주세요. 성심껏 편집하여 제작합니다..</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhAZwUrplBbzfpi9dm3vq4IGyswmeXYGTC_9GBeL65VAwK30hsVvdY1VywMkFbbFBpaaWi_YHkyj2mV24rnvUtDHp83GQ0KJy9EnIzuhu95hH18fnEmzOVoaN1cCkO1l4q7HGf3objkHqQsQVsTunSg1DDInm_J0zoXOOk0IfbDUsUjkL7u6RD4il8Rw0MH/s690/20.gif">
+                            <div class="textbox">
+                                <h3>동영상에 어울리는 음악파일도 보내주세요. BGM으로 넣어드립니다. BGM은 끄고 켜기 설정이 가능하세요.</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button"onclick="moveSlide('slide3', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide3', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide3-1"></label></li>
+                    <li><label for="slide3-2"></label></li>
+                    <li><label for="slide3-3"></label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page4">
+	<div class="notification">
+		<div id="announcement">공지사항 이미지를 선택주세요. (총6개 이미지중 택1)<br>접속기 실행시 공지화면이 출력됩니다.</div>
+	</div>
+        <div class="title">공지 이미지</div>
+        <div class="section">
+            <input type="radio" name="slide4" id="slide4-1" checked>
+            <input type="radio" name="slide4" id="slide4-2">
+            <input type="radio" name="slide4" id="slide4-3">
+            <input type="radio" name="slide4" id="slide4-4">
+            <input type="radio" name="slide4" id="slide4-5">
+			<input type="radio" name="slide4" id="slide4-6">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjiZTr3fvfLKjfUUdTamWzdQA8ri8Q1UW0a6XTVBFq-5jdJMHOJummSYFAsz5m-g-fD2l5QbjkT6awwu1rZQcp4mZaE5i2nkXckk3Sv6q5360XeCCAjWA5p8UAGpg3h_xLYP8g8DFd9axRox4nH_zk0m73FFzev-qFSgQpjnmunoQEmdSxgi7lyHfqZI0US/s586/21.png">
+                            <div class="textbox">
+                                <h3>공지사항-1-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEimGrg278LMTbJrR2HLQGivDcneFFK18kMQhyi-LntnMZxrnTln30TOxooIm3QlmhIYA3xFpyfGKBVEHqIaxob0t-U4b6A3rIRqfpwRBqGDGfplP2u_4HV1xbRc7uE6J2ccCY50vQJi_2_2ADzEDYIfd2nGljVOw-dFEfNzlL1rQLo7GwDYe_BRW4HKmGOQ/s539/22.png">
+                            <div class="textbox">
+                                <h3>공지사항-2-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgGLXeB5DgGqPafYf3jW7FYbpCd4tYlDl06DmR91U7F9ioHPpyJS4RKyi9BCOa2ipnBBCYABDmBCQjhTwucxWVauI0LtOLzJ7vkYgICx5dRyfwxKlZhQkWCzK4cPWh0a8CZm8k29z04ktPk04AJdrpesVPNibed-Yts8DYQ8l8bFhj4PCZ7fln2CQGfUF_X/s697/23.png">
+                            <div class="textbox">
+                                <h3>공지사항-3-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhlImTamEDjeF3v9phaiQ1LCcDFcq8WUPuzI3wS2YTgywBsMIJUx1l03ZlPoHmq59LgGebLfVSmm5qj7FCo-Osd35CHmPkRR2_VeKcdMufAfstkA8s5CU-JK8gpfItNcJ_6P6dtuaMziANyuCWysQLPVWdcVYrw_zNExxQ7q6pedxofE9sPeoJVWENcIZbR/s361/24.png">
+                            <div class="textbox">
+                                <h3>공지사항-4-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgqF0815uz-DnN4UmdmdoTt-0hnDkqAjgVnVbhhH_jguooYvNNb_mUNX4GCs2esARA5HVKU3SwgHh4SLmN4E3Q2mwvh4UAnJ__ocYtRKw4lcIJej_yih1uoIa2veMabatvHQacjThfK-6Ch-ocWoFbqV78G8joxCjOm8XMqbh-bku6tXOHvPeZN_4aaIls6/s664/25.png">
+                            <div class="textbox">
+                                <h3>공지사항-5-</h3>
+                            </div>
+                        </a>
+                    </li>
+					 <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhLRCBS1mTd0x8acmkJKolJAzu6pI2cdrVL0PmhwyJ7UM-LjZkUD3A5Q00sWEYE-NxXkvIyEa2UlEQycWuFm03boSh_yjaS7h7KAvJgIhLGJe8O9dsp4PRcF4UE9gL1GvMg5PaW4mdKyrFFtVqoJxdkUvNY70QvdBv2ftK1S7gDiO-t9rXpAG1NRjhoXZiJ/s566/26.png">
+                            <div class="textbox">
+                                <h3>공지사항-6-</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button" onclick="moveSlide('slide4', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide4', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide4-1"></label></li>
+                    <li><label for="slide4-2"></label></li>
+                    <li><label for="slide4-3"></label></li>
+                    <li><label for="slide4-4"></label></li>
+                    <li><label for="slide4-5"></label></li>
+					<li><label for="slide4-6"></label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page5">
+	<div class="notification">
+		<div id="announcement">회선을 선택해주세요. (총6개 이미지중 택1)<br>3개 회선을 지원합니다. 같은 아이피와 포트를 넣어도 상관없습니다.</div>
+	</div>
+        <div class="title">회선 이미지</div>
+        <div class="section">
+            <input type="radio" name="slide5" id="slide5-1" checked>
+            <input type="radio" name="slide5" id="slide5-2">
+            <input type="radio" name="slide5" id="slide5-3">
+            <input type="radio" name="slide5" id="slide5-4">
+            <input type="radio" name="slide5" id="slide5-5">
+			<input type="radio" name="slide5" id="slide5-6">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjuhHeQYXCa_KH-kYaN63IwKG8kVIB2G_4nInlIDQTA2O7tPEq2IsTTfu4WslnKSzo0hpfwPXUWSgodWNx0iYng_GQi1Y5oY8BBsXfOtauSDa_F-SjAI261_DkEsuVxsnGh0lVRk_25dJdxIfBoOgs3eR6ZleOTUpblsX0kg_Fho1itCYkia9UnnfxUk9pB/s468/31.png">
+                            <div class="textbox">
+                                <h3>회선-1-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi5FuiORTDd95g-0TXIC-YXVvvt0GBcc3rPhdOJD-vLj6g-Mduam4A5aRAUwpoXWGV8g54R_i5GVa88Yvyry_gNLRSblu66Bof-ERJGaNAoqtO0nP4GW66uBZ1CFNr5ouyErsSId13n7BRtHp40BaZcABgGYcxsG5-To0NZBwn-dMLZfjehQ_jyCIAVopwI/s497/32.png">
+                            <div class="textbox">
+                                <h3>회선-2-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiKTcqLBtCaTi-HrYAL5UNzDSdbFuxsIU0VNb5HeTDLtzzQxCQBIj-q0tpa8-bZe6I9NonFmR2LbrzdB3Yd5EDvHiwoId6DnH3z941pwT8wQECMLN8NnJtzmQUyvErbsNlujVDQ2RbgFaQraR62Zyl9WTq14oxrYj-EV4cCjdhImTN5MZB95Y7dte95FWZu/s400/33.png">
+                            <div class="textbox">
+                                <h3>회선-3-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhPfJh-Y6Aom6naMochGN-8b5J4If8nwGUIz5qMaH8CIvQLa0F0R7oPtZq36tRhO66lg-AWwIKOCHC3oVPjxL5RtbsnHMYZtw1nb0xqybN2mFGYppj-mjHrWzvXRIC6wKo6SOg7BrJH27tQyjzHVZCy81DDzdSPhjUIzNuJEn-qan8-7IeumUgjRWAZnAIP/s545/34.png">
+                            <div class="textbox">
+                                <h3>회선-4-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj_BONUCrAYUSi1-EI9Cg7gMoE7TZDKmi6CSb4cyxjLwaze2MbLR80zatFNrboFQHSiXjFXbdJ2xdy6jhyphenhyphenLrAFI62a5ouq3nb4mLfPlNKhZb68AK50mVguIHJOMossWr6dd8SKpatDC1IecZfUiaeyalVNjKSZYH5oLKq_zeYrn5I8PrpN1g_jo0kBB8WIE/s573/35.png">
+                            <div class="textbox">
+                                <h3>회선-5-</h3>
+                            </div>
+                        </a>
+                    </li>
+					<li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj2kxpNoHZLuBGy_b1o4dU86t0NIrHZJB6jfRixYROLtBhdHP8LB12jQjd8yoWNm5x8-4TTecSjerrknV31cW-fotUbluUVTDFm5m5nIRbbU2tM9SOrWzM3Lt0EIeyhkQe0IwVWVQhhGa9WgXDtggP5kwSWkVI7cYL5YjKqAmCjEx8BAdTuGZpLPO7CZp4E/s428/36.png">
+                            <div class="textbox">
+                                <h3>회선-6-</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button" onclick="moveSlide('slide5', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide5', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide5-1"></label></li>
+                    <li><label for="slide5-2"></label></li>
+                    <li><label for="slide5-3"></label></li>
+                    <li><label for="slide5-4"></label></li>
+                    <li><label for="slide5-5"></label></li>
+					<li><label for="slide5-6"></label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page6">
+	<div class="notification">
+		<div id="announcement">디스플레이 해상도를 선택해주세요. (총3개 이미지중 택1)<br>전체화면,640*480,800*600,1280*960,사용자설정을 지원합니다.</div>
+	</div>
+        <div class="title">해상도 이미지</div>
+        <div class="section">
+            <input type="radio" name="slide6" id="slide6-1" checked>
+            <input type="radio" name="slide6" id="slide6-2">
+            <input type="radio" name="slide6" id="slide6-3">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg3xIz_ULFT0FoxjQ0283P1Mr0_aUByPLXiHmRzJQyk19QKm8_GpcjGPXGwKa0oGx5Y4VIjC8fvtTERIrVttx63eH2sJwA6jvhTYaWnFMdw9TAL6825ORNPh9RI6fBUGOcVIaj4RIuJeiQ9FFYhL27VAx3XjkdJV_HoQU6HuAyRraTF5DZRTXhQN9N59k2J/s647/41.png">
+                            <div class="textbox">
+                                <h3>디스플레이 해상도-1-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhSfgENODz_BQ4tUXa8YOvP1mn5h-oRaMImqjvstjiR38NOMYJG00zDVldlSH3kH1aFEYRpskfzQAzDZznlp6UB665WeEaYljb_KWCbpcdqPNCdeA7qWxY-HmEYcl0jutB9Lh4V9-mVySkc0jejAaER7jBuDc621A9OMXA6YAKAsCtasHEBgXbx4jQse77-/s500/42.png">
+                            <div class="textbox">
+                                <h3>디스플레이 해상도-2-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjSDugB4PeAg6awWbetLeTOG538t4RA6pQEt3B6AK0GfTfqEQmtRWgKZNIFzQ__PZXNX5iSWBWilGw0LcGlNk1OFpDvc7DwQxKlYqoNorzjm8R0aF5qOpR7TaWKAx1QZITs_iHjFVG3wd8SxL9nkNzJlOuUj1KCQGd8lFab9GSl5_HgAc5hYHozbSXhUlf1/s608/43.png">
+                            <div class="textbox">
+                                <h3>디스플레이 해상도-3-</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button" onclick="moveSlide('slide6', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide6', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide6-1"></label></li>
+                    <li><label for="slide6-2"></label></li>
+                    <li><label for="slide6-3"></label></li></ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="page" id="page7">
+	<div class="notification">
+		<div id="announcement">현재 1.63/2.0 버전의 칼렉(자동칼질 ON/OFF 상관없이 작동),길렉,리소스 암호화<br>Sprite.PAK 2GB 용량제한 해제 가능합니다.<br></div>
+	</div>
+        <div class="title">접속기 기능</div>
+        <div class="section">
+            <input type="radio" name="slide7" id="slide7-1" checked>
+            <input type="radio" name="slide7" id="slide7-2">
+            <input type="radio" name="slide7" id="slide7-3">
+            <input type="radio" name="slide7" id="slide7-4">
+            <input type="radio" name="slide7" id="slide7-5">
+			<input type="radio" name="slide7" id="slide7-6">
+			<input type="radio" name="slide7" id="slide7-7">
+			<input type="radio" name="slide7" id="slide7-8">
+			<input type="radio" name="slide7" id="slide7-9">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg4VRRwB7-a-TPOX-2-gCCzYKyJvugM-S0bUjcJt7BJ3fcaRx9rvIHqUC8d1iniZdH47HXbWKo3L5Wd_O3NgBb6IYUe1BPZfQFh0QvNkYHlGJRm0r8gmD1NKBGyE0EgZxBuam91Gumg3NO7s6pGkHeXQ0FoWqeQ05ySN8sqDNNjOKPotxIQDLrASvODB5Kn/s600/51.gif">
+                            <div class="textbox">
+                                <h3>접속기 사용만으로 구버전 칼렉이 사라집니다. 위화면은 2.0버전의 테스트화면입니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjSXcHkNOetnoYAeW9oehl2ku0r5RSvosBP3Fh4bdWtw0sxwaGJUfW2S1JcL5W0W12R5b3sm5kFK_v8ECcOoGiBi960INb99pDK26RVQ0GYcu2MhUTylyshZnvvBmoF4gYv5rGskWmAsu-Cs0ulMmY6KwFoQS7m_KzU5Dq7vC17Yj_s2RfeplaECiHixXUm/s600/52.gif">
+                            <div class="textbox">
+                                <h3>구버전 길렉현상이 심한데요. 시원하게 뚫어드립니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhp6xcSASWCpdXvAWmYGe8AdS13V7d_3oSoZoWiV74xGzLBYBvFxoT6zcvEGEtbkRto8EHbjnrI5epuKDIYuSdZrP9ZKFmQtEGFDlI04RjxtFiC2itrBuozpaIjFjBPQq7IUJbpboLrNF_4-Lhmt46ZHXOmtjSHju1-hElvg5Lz26DUD7WCNO_eEHYzRCM8/s800/53.gif">
+                            <div class="textbox">
+                                <h3>리소스를 암호화하여 클라이언트 복제를 막습니다. 리소스 하나하나 보호됩니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjI7y5wJPsy09-n5zC5rPP2FkMz-hUSRjHT4QF1LWj5IKLFvMDxQh2u_2lIaOXZrk5sfONbhg5MWzHc8xdV4wRtR_qnLtiZh7dbhuHztygV5a8TAoVVWUEpXDOb38GXy3j9uIfvqym959DDhEUx3HZqd8xuTfZIlLIxaBRYoCm5QRMfQeAyrbyo0TU_fejR/s600/54.gif">
+                            <div class="textbox">
+                                <h3>다중 클라 1~10개까지 설정이 가능합니다. 창이 자유롭게 이동됩니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEinswY-gQ73Yqwh1qtjXp_WZGUjdPPVFT2MzGk7kU3gyQdVe64FgSMUby7hmnJsH2aolkIokDOJK3Fxg9xwBbB5jbqj46SjmacB7DfL7_oObw9aqal6Jg28k4FNJ3ZQyfudOQ6wPukbhNzDbXNyATJ79Z5FaG3Kv91hKp7k2dDB85fALTdAmUddqYYrJDy7/s600/55.gif">
+                            <div class="textbox">
+                                <h3>자동패치로 운영자님 스트레스를 날려드립니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+					 <li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhaLiZK9hIAdJoy-qskMr4uKoFVzPvsCKGLJD_-zS9-MNnidjd8r_r4k1HTop_Vg5X0ss7MEQuVv1vvJJBTc7X5RJtwKQ-dyuK4LejZuYGTNA6JIpzARyvEIFpvWIjEDv5kjbfQaDnttHR8cZYr3XGZAu9fJdb-4enXJvFvQolRE8GtrypfGbHoQ5vqqZOX/s720/2gb.gif">
+							<div class="textbox">
+                                <h3>Sprite 파일 2기가바이트 용량 제한을 풀어드립니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+					<li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhD8Ic0Szysa86CTTLb5HoUu4g7_92FTmXriVLBH5tUJSjBCfwMx-5ZLRolMYFjwiPOxRom3WbRpoDZJ-Qu68thxFDF5B-M6mmbnIxfq3g47mMuTOA6qfwJSg1KxPtwOmUlKMF7r1zo27Swg751PjEGmKkM_fzLt1g8exz3x9gz1p5NBmFJVhz6ZTZROHvU/s700/123.png">
+							<div class="textbox">
+                                <h3>접속정보 수정툴에 접속기 실행과 동시에 exe & dll 파일을 자동으로 실행가능 합니다.<br>클라이언트에 미리 같이 배포하세요.</h3>
+                            </div>
+                        </a>
+                    </li>
+					<li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjSHunDG70YFHmG41FwbHKN2YTVnhSbAgm36sUt_-BIMpdMzTh3eEbtU17yKEdTqEeeGfiH26BvyIdltIgbRlwODAOe9E5uHSKXIwGej1pPIcI3nTCMLtfk9NSOIbhm-qtY4IPe6uWyJ-g4N2Q9m_o1ItGWzCMUXSaVCi2P7OAXmnp9JmkXOxKTJvumYelw/s923/51.png">
+							<div class="textbox">
+                                <h3>접속기 자동 업데이트 기능 추가되었습니다.<br>★자동 업데이트될 링크는 웹에 링크를 입력하면 바로 다운로드 되는 링크만 가능합니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+					<li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEicQrq1C0fCwP-nc2fGuPGISiW3frfua0veERrSfBBtD0C34leXzhVfhPy5QEJYMsp6nrpxVmSgpDexpuYi-JEfePN0hWz2DN7iPxKNQncWgzZRgPthyOpTB_d78Zdy1UTzpIfM5W5hgCzdmrH-lT_nKnelqcJRAyMLBcGnUyi0ggK1g99A-dc70vT8ooZo/s800/guard.gif">
+							<div class="textbox">
+                                <h3>게임가드 업데이트 되었습니다.<br>스핵,오토등 실시간 업데이트 가능합니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button" onclick="moveSlide('slide7', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide7', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide7-1"></label></li>
+                    <li><label for="slide7-2"></label></li>
+                    <li><label for="slide7-3"></label></li>
+                    <li><label for="slide7-4"></label></li>
+                    <li><label for="slide7-5"></label></li>
+					<li><label for="slide7-6"></label></li>
+					<li><label for="slide7-7"></label></li>
+					<li><label for="slide7-8"></label></li>
+					<li><label for="slide7-9"></label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+<div class="page" id="page8">
+    <div class="notification">
+		<div id="announcement">접속기틀 이미지에 미니미를 추가할 수 있습니다.<br>기본형-2-에 적용 가능합니다..</div>
+	</div>
+        <div class="title">미니미</div>
+        <div class="section">
+            <input type="radio" name="slide8" id="slide8-1" checked>
+            <input type="radio" name="slide8" id="slide8-2">
+            <input type="radio" name="slide8" id="slide8-3">
+            <input type="radio" name="slide8" id="slide8-4">
+            <input type="radio" name="slide8" id="slide8-5">
+			<input type="radio" name="slide8" id="slide8-6">
+			<input type="radio" name="slide8" id="slide8-7">
+            <div class="slidewrap">
+                <ul class="slidelist">
+                    <li class="slideitem">
+                        <a>
+                            <div class="grid">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgWWRbV0piqOwLol8DDtzXkRkIeHkoNS4t_8kMmI30qTdoulWZ8tZQxn3ozuRBVOflXGckw-cjBjxAVulCFns17FrxtgpySsPIt7RI3dQzvoFJMoLT49eelnAfnA2BY7eMACzrTI_yjD1wjolOBZiJkMsVQNPPfs_iAfviXIREe-S-E6CEe7GXfdQkwtjAe/s150/%EF%BC%91.gif" alt="Image 71">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhNKpKED0_SInyE3KJJJTtmuATfA57lWfGfUNTAtwV2g6673ibW3baUN0jnBkrFO1FURK1IT1cVFKcO4aN5d1AC82pbqEudTbykMBUGy8b1Qk-Kw53BZ01DGhG9hz-jWOqCadaJs7bnf7MBFwVn_bQKdwLuo1Pp6m8XhSpPfMhF8R2qWtjQW_8RX1-aszGX/s150/%EF%BC%92.gif" alt="Image 72">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEir1n4DC783oWoNsN8ozKjkNcaZEyhRMvflKKaign70ZmIUIP6AlwXIZig35iwAYP83M-h9n5OWg7MsNJwesuQVfOvBjM7iV-ejwPz-MYioO2ml_B5uebp9r5Dy1X631NBlXTjQ5KjmBsDJLhyUUcbfgv4xPidJpRMFifmF3vMAD2hDAmfXqCC-a8xS7ATy/s150/%EF%BC%93.gif" alt="Image 73">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjHxu2Ak_U5dp5WdwtJqh0klY2i8dBs7wM3Uprj9u9Eu32oYezq44_m6mEua9kFgEJlMq94Fk9bNiglOC3x7TCWufleK5j4jvt5-rDper9RHYzPVoPK2iBabyXh-qSks1DpniwQlnG6Yh1zgAT9k4j_JPZR8y9EleXjZnvo6DxsTxkrJyF5VmyTNrqa25ma/s150/%EF%BC%94.gif" alt="Image 74">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjPY8ozwp3BjLEFsMYEuZRMkhnUCXQ0qW6ElOfQ6OehMJuo8jkgScMiYBUOdW34QyRVW2pnEDaOJm45eVMjnTwc7MOwQdXZFjXSH1t7hyadQBRsxZlM_A_3BQJpm34GNebQsYf_mpECHhqhyphenhyphenUwZQRvdeJWd6X3s4V1xKk5WRgeVSiHEEMwn46SKpwO-mln5/s150/%EF%BC%95.gif" alt="Image 75">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh0cho-5aFzZ7fymZaI8hyphenhyphen6VHYTarUEAqzaDs67gTkCzmBK4VHVtva4xQxSBKELRnm1Z4YkWE9uHo1uP6HeWW7qK4WgADbryN0p2d2dbAl_TvZXCROvl17zUg6zf6YzU2rNr-hCTC3bA28q7XSHfAByurLEC472GA2AbGBGnpP4J4q_PTyLOn9oAQNzjAaE/s150/%EF%BC%96.gif" alt="Image 76">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjgQ0fpVyhkze7iRG06wIwfa5udMRl4XO38oJRRlG_TEu1JMXiD204bWfZJ5DMqsNaIeYWLCuO1R473asS8-iXnZcqJNfsknzVx6t_v0Hs3LpU0NefGvlc1uz7d3jJ8MQrOeKaKlgjShRaEHpxqxkGmMoH3Vpfbn43FEQ4_kVyufxf1ZRhZby-FKQnWLng3/s150/%EF%BC%97.gif" alt="Image 77">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgV1WeXbBBudrcgEm1l8ekJWPduOHs5HDK5kXAp9AwIH2d6xdGTUVlg2y5PwJSxIL9hVeW6OLmA9uek9qNcSn3lagrN-76Ox-P1EyXzAepMKaRh8kD8opB5Rj5Rq4WjO-y_byLBsiBFoqmQr3q0J7x7p-qwslSa544jS93HCJFm9mgg6XCKgPVXsCGcFCY7/s150/%EF%BC%98.gif" alt="Image 78">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEikyg_QkOGAQh-IY9Fd_Vbp5BAzqLhSILoi8WRJsn72kNEawNgDqXchyIPFXK6Drj3awY7VwCh6D9QyW5HQLph3csrwatPMvRCr5JvAL4Jl4yR83QPqZfid1Ed0tnb2tVx_XzzKNDWZBIarJ2wIyKF07XJPJv5uPDSwI6gY_CY0zi3Hf0cw4mcab3IXVqrp/s150/9.gif" alt="Image 79">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjr22hZIEAXRgROEzRApstXnrkMzeJJb-_UaTq4Nt0eSDBU16SBFFUKFNpYvE_rLEusOVSGG7cdZ8PKWk4la9DQCPhuP_aClNKOYAcVbRqbycpBkJZKsW0H1VAgXYV7z0Ad_7JFJScDVfQDAoMG4ucA9VNVUuJo-M4T9vgW5GpEMUdF_AP9zEcWMQzBFoI3/s150/10.gif" alt="Image 80">
+							</div>
+                            <div class="textbox">
+                                <h3>좌측상단부터-1~5- 좌측하단부터-6~10-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                           <div class="grid">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEisLwQNaoMV01af8U-YlgK0qbqo-vRmj1DjHI9M5eYshdqnfv4iftwgIGfEPsnhupjy7TwQB1UP0oxJwF4y3GZAOcTxJCkwzCx9SRMum-AFcRGjxUEEykTEI2oMm77zBxi38kTjQleXd0QYFJQ2wkTFl0qZs7MfXD5LC6siBRLZtVmPBqgu5PHK_Iv4AaKp/s150/11.gif" alt="Image 81">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhISUYKMMCTu1bBDkXIj9Vl-iCscKwFmhAg2I6H6hf9yooSScZUMTpKoEdJ9CF2711PT3Bi4_6usu1PCpMmxYDbiJMK0ZflwDq-0ySLIFnqta6dcpTV2YjpKCA7QfLLo1lqX5A2KZrkUV88c6C5ynryIcF8cr14DkHKEoMIxD06ezBfVBW1AhdyMohYTipO/s150/12.gif" alt="Image 82">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj46ZxNNh2DkYukFvtiTOaZdFYCneadvnwkRLpMv1ZEE7G8snBonxxSlsuUjSYxrgXRR_O5fip8pEDoyUEHYPca8g7bvnqr-GrR5YpVawB5DOk10iGYsP91fjRCqb2CYzcZ7JW6OMNJDlJEFFspRGCjGCeadJ3rRrtC3yPZeOju-oOIqQmY_YscBOjS4FZe/s150/13.gif" alt="Image 83">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiiWsddIUdeEqameEL3hPG0HJUu-5m-i1IiJ1Nosyc4mAPGyWzg0YBKoAZCikTTZ03geS4XPpcZ_34z48Yu2HE8NQ0CyF6j5wBmUP1YxuZtuHk0y_qTaRcb6yJAWuz3iQflO49igoRHAHYKxniOEMr0YDHKXiBxYMLjPKgcNNkyiTHkjuOiw5ZRWCVWIima/s150/14.gif" alt="Image 84">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEitpUQOqXH32jQgpkqzjVBB1CGsJEBjpHmcC-dQMUK9tGZ3b18hph8Tv8SNAZvD2Qto0pixSQ7OZhFQn_9oUmIyRbK_kyEdqTHSrdyXdV9GCu5p5WKiFwqNO1wkSBLGt_jIyGIcWv6H1j9UhopEPkc5a1B63hJ7TDTZGgF2i6BS6XxegDNc3dp03VaLRH-c/s150/15.gif" alt="Image 85">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg82ZU2Zk-ayyeCXXOHhRun4ejcjqkoW40q3SDPBJLYUoeoaoA0Jw65ryRuIHmohaROmk9joBqzjJevDvGMWV6sYpVSBaCa7vVMV4otbLEhyZrMCAQ8XJErMdCSIyv8mLPkpVSSykQ0Sv3plr1N2W72OUlOc85DBVm7uGYiix7IFYckWSKQF56pUkmeZCO4/s150/16.gif" alt="Image 86">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjOsVhAh0TcQZJk7xqAFsw8rUAjRdnLKL5Usq3Q1S2eY5lhwgMer2ynzpp-gOUDoOWVEWhP9CGyJkrgnnOAkTgZ3G8XjXAWJDesukzch4KRo0rIJZL9CujpSO9RfPP9P8sMvTN_L-L6NnZZwMOtTIQMkZh1uKUtwuwyRNxtK3wKoo8sgT7iMBYUZ_zWD8bq/s150/17.gif" alt="Image 87">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjGM146XgRgsAv32Bs1dn5cYtv_7HsUgD28UbWC8lImR9GEtReWd7KIzDOGJyGNtNRLs7a93E9ba49CHuld2llczd_I2du2VcNZGJCIxJM9jkZ1IV0PqHPSwJYYckfCE2lfHNfwoFJcFFb4uUbcOe80dr33WDTPFi2KHH144ySEIvIPXBD9UOtPzmue0XxV/s150/18.gif" alt="Image 88">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEglNoEXmw0jRImGlpK-u8c-wtJZ-Ele9-AfGTGavZcIpDnc8ejLe9UJwNyw2lOXgQ2jY1LAIU5zvOgZ-em09qxT8gaXcniLpLs1mDPNuRRv_HhIqojbTjWGdgDcoAoZxDVUpNb18_y0fS8GAoKsKSyRQh0hyphenhyphenkd2_ZLmnCiN9MAodqAM4fpMrbr91_PdWbSp/s150/19.gif" alt="Image 89">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgZvghTfwVdrq8dNEiwZg3LINgCjBS1VNHarc_jEC63wiFnrIwNxtV0XmSl1CD79WSjqo-qXnAyGTrXJSccoWJCaOycHtrR6tr6tP36RboVOElAd15qk605NGCtYjoHfDmJGizQW1i_J-7a7pw5J2EtvPIvVGr-mul7DqQaGr8TopeOj5DEZjQFaNxG-ZnN/s150/20.gif" alt="Image 90"> 
+							</div>
+                            <div class="textbox">
+                                <h3>좌측상단부터-11~15- 좌측하단부터-16~20-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <div class="grid">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjb9EbuLGz8yBcS8XbIvRYqZl3ZqSaLaXB_Ycg1s-JVYy_VQxgkCmE0BZfB2JGMCGrNdzC-6Yzpggsi8XiA3JmXlSPjk7XxxjEGp1jz8_boIptwV3K2QSF3WwDNIuXx5zaCf8G_bAtet0vQhk8FbUK4jA8aQ56582OVSNXvFUEBv0-kJiN_nB1S6EejAwRg/s150/21.gif" alt="Image 91">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiIDcBZbA09tRPn6wKxsioPwmb_RQZsx10AoGeGzzlEw_c11vEKnHWAd3P6aaQEPUx9p3NcdvBr7-ec8pQd7RuxdRNMhdnfQ39-neVZWyXc84pGO8k3Mj9NqWTalcSn1dduPmcDkYuJuI76BepyUyBAtxcjI3B0gTf87Gjp28H4C2tJEc75coUogyJKunm4/s150/22.gif" alt="Image 92">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgLNA-1dIZHVVJx_4W01uCK2lxTiYfwzTEqNL_MV9taooX7uiEXsHVeYbO16QiCSOGvD5ARZqYWh7ixKyOkBwohA8-STRgDvm64ZKeCXMZHKFK6p5Ah2l9FgWpFwXSikV4Cp5SC1DQSEqU8ADer9P8FFHKdMODdNMcnOfJcUxHU07qy28yIBbUbfUT6K05J/s150/23.gif" alt="Image 93">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhR8ibdvY-FHXiMKjX7CCFKpKEP7adQxaAt-hgWjPBa3z5o1rV7mRWVC30A1OUgYR5qLn4iYnrRPXiYIkDYTEyOxeTCrjKP3CvWZTc6XwazqXnFR2FDDkGkCJaZ7reKdNrINvErsuaJZzWId8f9DiMhz0EWBXjk9JME8x1D1T-IkBp9SvN16cMSUT6WwytU/s150/24.gif" alt="Image 94">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg8x9NVG9y0XqvAoPHEVO9lwE1AI4YqBUEsb9S4ISh_YDyrqTY7hFDGT3US383ryBjxo0XIE1hw6wxbbMBNeUgE0dncZUTA_doE6l9PVJQl4v7m6IiOJ5kWdkiTk8pc4XMI0TjbwcxfRaYFwaB28fhnbrdlaV5LeljxPWVmIxOAG4dc5tPZD69OY6Osyabv/s150/25.gif" alt="Image 95">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgqt-rQeomGMppFdbjER9qY1USZK9BTpLkePNnodD2BcF9HODlk0hRuZPNfFc9p8oyuWaNcvv7-05ByzyUBsynt8hwOTZ0RQKDz_pRxDtE1irVipHfwXO7jildXy-mvvVL6vOKFt4FBdaIoxszNsk2bs8SaLk5imPHTgCNJn2a4T-m9u9HA6fa3yHmTFtgo/s150/26.gif" alt="Image 96">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhZQ2F75zYswPjE6XSo6S8brgErwqI-r_YF1nyEowGyHEWBcZe8I5GDh368xpZ8MJzdfPNZRQhE0R1gaItgf5Voiils2oZiwmUG_GZvkeuftz580ggOjNOsqy3PvN7hmbnkXBBRkLbhp1b_racJ_4zME7-R4rmhvNXy3rP7HXQ_1z3knoHmvE6Hi5zUDWsG/s150/27.gif" alt="Image 97">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEirf1Z3ArCMSKP3raORKIeML30ShneatHdUX68k1IrION0SoCzaTrgiH3Wo4sMUM2ieE0CuxKr0-fpgOl-QpMTnl1ZSvYZzGc6oc0lp3aBNtnP6pEwnWwGV0nXcSICyE_JAdM9DFkQx_4ac9J6KgLGZAIGin7cw8TkmKHI7MKi8YOSIP-_4HhORAMzD1Kjb/s150/28.gif" alt="Image 98">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgNBaXI4TnwTqQdVt145NzacNPArXBsXIcldp8DgOF20FcWbmXFnNAzozKLeWoStq7gPcfNRFCquVpXr3QRyubVDhDWFp-D23Np_XhHNTlRKwl1vBVql3ZIZCtn_-unEWOe3t887CUJOrekdYkvRWitdRN3vgUbuyzbAsreQwDUXYe-rs2UKtAi4ghQWseJ/s150/29.gif" alt="Image 99">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhM8MD1iE3u8saw-dmsjvaN1oz5l_3TW8RLVfXiDQh9Y6eU1pVqc0ZYrElCg85nabdaU_r-TVO2BZ0f3mDQatSmsvhVvHgHhhen6Jna1_7Dx_Qf1On7CJW3v-qTBuhlYnrGSj7v6aQ2IsQ61ME1iRSW-3n-QWmD8o9g-ENCdrh_dl0XQiY6sl_qL5faXZEy/s150/30.gif" alt="Image 100">
+							</div>
+                            <div class="textbox">
+                                <h3>좌측상단부터-21~25- 좌측하단부터-26~30-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <div class="grid">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjdhZb6hBSNP9or_NU9yfKVURYLOG1AoOkZRqGyR_V2ZHNMSZb3IF8eNaL6rQe3fD-EOxieFV7bMymVANhC1xMBWVWyeio57YD5QLa-5TKUHRzW1NBDzH0ri6VsXW_Y_rnwe1tkMxQhw3CSLf-r80wiBfLbaHPznjpQzmOaKZgvINwJvHuehE17BjDBOjOw/s150/31.gif" alt="Image 101">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhVF-t7lq_9bj2VXiJL1_ALyNJP1uniJvHWoSqlYPqDNtZzLAvPB5amPDWyTo1_DgvffsQHMAqvOcCmRUKT1zWbCtQpY0asqCHy3yowcqeJwhB831CSOol9z7FpqO1wcSRUA-bqkwp7yRT9Wui1rTgliqbbvFG1LYyes2QQmv5W-MPVyGq0ELgxRiPHB3Dr/s150/32.gif" alt="Image 102">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEggyrXbkVymSQivj3L6z8MUmXowMAJ8rE5fFGbQJGlbliFkbjNVj7ETzQddRBm9jT8AzGtAKqI1p60EH9_1NqlWmA5bGsW-cerWuL6jlJcquiPTMX7wIvoEI7bZIwF95a5n7KTj11yXyyr9mn79x3fDPvJ5tu1baAiNCQj1lJ-VO1SiM7R7k09Kh1UaFzhS/s150/33.gif" alt="Image 103">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi1HCQ-nroZ9LTVpblyZBpxQtxzF33IxHQvvUPKAujEIaY8RTD4rZXx0Its8M_qJocj1tdiZZOax-24dsKAB7SoNxF7RQDfQC79I14xBnNsGs5BFLw3KVGPjYr1KZYP00QAAIOfK_V27BjNGzDk8MGKMuOHOmupdgLg1f2t2LbhwRshInj2G4lkzNcmuhQw/s150/34.gif" alt="Image 104">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi1bxdar2fziZNbKxrYpprRk6Zx30weJXkJq-ocscdpMrcRMtKPvLXU7O_-S9xUH0jciCRRWnRNHYs59vQjyIVU0sr6HlmmcEZHJBEpA1BJROxb-3EEuiJlYPJ2X8J77WSaJxBfUs877phuk2p4cssLaI6CoedsOx0mJMKtq6t4NmWtpM0ETLnCtMHubmW0/s150/35.gif" alt="Image 105">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhxLJAQv5RR_g7XomejqjDUR8FWhS5jju6D4m-ULED9XRN7ZCnkFULDUOgVlYV1-eRpsFs73DPQVfqtUfhXHg7dxTgaKLI02zenbG4zwQuFaw5Epz-4FaOCBe7u-jDm6PIULRQ5QTP78XoT9JxzDUy-jnxIC-2H1WPGjMkamHlcKFnB9ur6hH0wLWdTiKT_/s150/36.gif" alt="Image 106">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg1LtzJGaqwgNUsGcvdkd54xpWjKzpHmc49RWycBWASPh5SSHBkqxdK-xivhP_j7OzcUGPfZC4hzlH-vLE0s40gvCBK-088omOZSu3HjPJL-Dr0vzybCNeS9kLqU2TJ1GfEfJCiTk_mqh7xPqw9-7NrwR6piZ-TjHhoUyRuJ9gDl57NhY7KFlaRzShjqAy2/s150/37.gif" alt="Image 107">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjMn8z2Hq-4Miutx48mXVzzXRd4r-05y1huUDaaodJEgLjua_qEfC7jm4hTDUDzA5Bjgk705EQPevp7k_4IuPanHc4P2Rd8Ezh8Rk7XOOl3HfWB5Yy5d-RXbvf6mXQupDDOaESCeGSwLNVT-y9uxALPQ24DYpuQGbIiPaTuPXwTrnv20uOrEtqmg3D8ODm_/s150/38.gif" alt="Image 108">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhi0D24kEnP_Bw2GEwbu6yalv6O86_ffDKWGHE-vvaDDZq7XKyLr0pPy57qRB9y6MqGRTvYS3QCHW6nY92UnGIX7ksCfbvIxGTDwCNu_dXMViu9TZrWQ7SGh5MJx-5Wj4hvplc1nTH2l65lkaRokJVZnSTm89HXNCBXP7ivCWs0Mckez83qnPX4QKPzPwf4/s150/39.gif" alt="Image 109">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgVvTRTyM4WkqXYfTxAwOwFfh1owo9FowT8MnRLVcFyj9B8rXcylvw4FboY4qJlmlISnyPLOULwjfgPH5OnXNwnXLugtrR3HiQdPXYqJacK2_aEv4QJZ_Ujg8eAgKgAFHu1waTpPvSGdLuXEqLL_5icbdFD4gTz0XKnJW_nQVLYBxMl3AUWP6JVRR1zi-Zs/s150/40.gif" alt="Image 110">
+							</div>
+                            <div class="textbox">
+                                <h3>좌측상단부터-31~35- 좌측하단부터-36~40-</h3>
+                            </div>
+                        </a>
+                    </li>
+                    <li class="slideitem">
+                        <a>
+                            <div class="grid">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhq75Ot9XfB4FmqAGZu9RdmoFBmMG40ONOYcpEeqg2CTeKGgGQlmoFxdRzVFAod9iaxCiUPiZiM8Ioz6zu4khCYxs42kbkmXnvkfxxP7bC7F-vozSzToVGFjAn60mIkcL4L4UQR8qJ_v-8rlMLX-yVbQe6AJDAJMHdU61Sle9MDWbao_4r9PVzkO8jniKnn/s150/41.gif" alt="Image 111">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEisIuglLz5IX_3xy_7puycXokdj6pz4YvNV26TIEBvv9mX92-wSMynNJx_eIq3peFcJSbGz86yGV0mUWeEf3Z81JZTdzZk2ZI-fgJn-hvtW9NwvqEaD4eNY2CjhuhbJkqHB4y9KyHKpbd2_DYlbMOhtJe2nlOtYT1sPymFFk-U4C4KrPxmjThTDNC_QhotR/s150/42.gif" alt="Image 112">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhcdskIp4jUzDEe54g8hiZVYLFiFWq_kGfd6Y4f6gUKmppbKwEjSuvo-Xh7tsdBhlv4tOiQslIawPwBNAZKWRd4Y2VKnKuBaqKWX6k-Di2y9n6B0ux7b_IJjp1gRzRCv3X-1ur7LgrsIihYHN2V-7duifMNN64_mTgdMTS-6SgjAq6w8hwWHNj6LHiAHa-p/s150/43.gif" alt="Image 113">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgNyIrJf3Xb5_iNtjbufsKaW7hl1I5al5QaFmVOJ8lzpBa36KMzgAByRU0nh1HSmCvwMGv5ki-YFxU1Qd2KlIFnCr7RVLj_L84MlGAoaHFdmw77pMMqtmtLqb4rIPkpeVrrjK-1jO2YIUgw7cBzrpnRlllDmVm3UiStutNZ0SmebiZvLKfzyfiLDcqJrEnN/s150/44.gif" alt="Image 114">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiagQhcjwOOtlCTVbJC16cdrDzR2bIphu9E_s-JLQPmOR07MuhsrtolRvHsCYFpYXcKktKIYqkFgvAMPVZQljvd0yaFaE9mi1Ju-58rT_rP67dYeGddaf8zG3ECD91GcD0uu5W9lDegbhBmJRD5b-Pyyt5MQQTi0FY5OXhoqmgWS47v3YSCAAaW97de9zWK/s150/45.gif" alt="Image 115">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh89Ec5YNTr38wpKf1MfSze8ak_GcE-LfIbmy3YTdQ0GP_sjOXmV1JInRq3n0v6V-4SP5xshhlauT1Vp8vnKv54fLVPUvTYaaI8fR1DXNHaMwuOloHK1FKGxvzNSktEE02kxFbhVDMUtAIM59zlteOAKsEe-RD-0HAmrXoFsFmzZdj6kgMG0G6IosRhESuc/s150/46.gif" alt="Image 116">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj5EMw8Inllcjt3w7Z_F9xyRdKI7EQv35LIHl4VBnqp77fbGRsPDX7Mf-mRRK64lasOLwj7qcKHTJZJmZKSnHl4WXnaQyIf4HpqDVsOCynn6QK0wdlrhRZbi-aCK7PhPxnGjIIxIrTb1AKy31_wT6Bhzh2FPMH5mDuHxGn8X0WBeqgi3j4aPHJbhqJhaHmx/s150/47.gif" alt="Image 117">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEi0uIhNPhhB57GXWMKEIMkaRVph57sKi6bvTZnbJr2asYqrW6zp0WeJK0qvu3IH63VqBYnkXrHyyzdkTPfpYQNNjkZVCynGNr9k2phH-YbObwxhm1pcUymv_e28kpedalD-TrZOGa2EO6d6pl-8LOPqXdJBrj1JwGTxEXEGcWOnr-WUsUFUwweSOFpkwgHC/s150/48.gif" alt="Image 118">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhLM_RoGdYqOXIlo6Hxi7U4h2wTPlh6mlsb05W2ZuKW_D3hI2ghO-SKqgdf_gfNq0IFirmFY8V9ylra1MtWN5Xd9JbZYbvfiKpP24cieUeieHbVbhSaYqXat6aXgHdsAx5nkmCNVBGreflLlmUlME5dUmyyVRvB7QULcKhxw2Yhba9_6eYAIJebp08Q7Yf4/s150/49.gif" alt="Image 119">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj7AWf04_gk3JROf6azXrysC6sQ0KqDs3lLaGDMR0e4QSNvw18kWuoAMH0OTJL4DAsGNP6w6ZLDpk3PNxSRKxDk3ucM-JL-Rmx5oHGyYIxlA7FM-9wN4tHbWz73AITAQMnH2M_C6awMZk8qSjNWSaTiwgscP9ava4zZAMd6VlWb4nGieY_AE6y5ESfcjnhI/s150/50.gif" alt="Image 120">
+							</div>
+                            <div class="textbox">
+                                <h3>좌측상단부터-41~45- 좌측하단부터-46~50-</h3>
+                            </div>
+                        </a>
+                    </li>
+					 <li class="slideitem">
+                        <a>
+                           <div class="grid">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhGhFejcl7Ia7omiwiqUTzI6XO13lC_M_IDI81LIkIT561iSiak-z6o4vCH3eTHlWi2H2bTzWSlBLE_U6YHmVy8ENHJp1wXUOiOLNEYpg83coIBKMe507Bc88qrvDRq4JHaN5h15kF_q7D0TQV_JfEFLWoHpWkGpKCDgVU2dyulJffjCwiYXFGdcgpcAbdU/s150/51.gif" alt="Image 121">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhsnQckqchkThUgDP6WlHb2-AbYt4vgGG3D9FIB2nr39PeaKPtksmR5rRIMZf-9BpwGt1s4pWDxphM6MZlg7XTHGyPA11tg7PKnT50qMhH1cOBOuwe8_Ad_GkNf0hjT_awH11bj1PyRq4EC3YBJjyZ3L4wnwsgXf5JjEXWb7FYGdDlFsYnCWq9mmiWVhcoj/s150/52.gif" alt="Image 122">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEis-ybkYoc932Os5hK5DODbZJjQMM0q-RCfxEmXf-41F28xiSgDqtB0DUodbhQmnC9KiY_wH94hF749YcX5yqrJjBz0PtqsM84qt12U8QhPu-PN5MkZhJeyxCZTLPOraMqfbzRIMZCx37hzOcfnHbtsV2dGSBPt8fTO3trRptiTRKl7mXQ-SROVzHQWen5g/s150/53.gif" alt="Image 123">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgeJSwLTovFq7gR8z45XWUYV-wLNiKOfKkHZrft1AQtSXZCfck6R-5PC953GKfeRh7JHbePmAPrjGUFxaVvraRT4inRY2e_auZAZy1gD5bCMwqHRzmljIxqty1drdWpDBSK6Lzya_SBG3ZXJ9vpeW_5kYPQQ2bRoukDufX5e0X5Pgg_SqHDWPXcr_heD5ay/s150/54.gif" alt="Image 124">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjgcuJOEcICnwK-mkXGBA265s1W70BvzWSzosyJ9aeJSYL1xhlygsESVjUDqLkZAfVY19Wystt3sp-YVdajBPQTT1ic0fu7VqKyHopIIoMoOyIpGPx54d5mA_6c204a0aKQB55NNtnDF5iUuh2kD_84VqRFVHpbTIIpH_W6PSL9jnaiSeWOYWbUkWFoSoDc/s150/55.gif" alt="Image 125">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj-kWEs_HqH740NDNnzU2TMqRcs0_E0lXypoX8pnsbydHiURThzTSsaFZTe7fCGt6FL4D2NzAH3Q2pjLsLsC8jRg1bRXJUsR_AluIPnm6_33gWVwO2SMMhr7YyITTGn9OBrXf4BU87VebGyPEMVFcjQrfrw64jajLBJg2P3pFlc0D317FlEGAj58q9-4SUt/s150/56.gif" alt="Image 126">
+								<img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEit8mrJ7L7nAK6ecr8qgRPZA-tYm4VjD-DfQ66hxOomxX8XnoURVvI0U2eOorYuSJiSTMY5X20mfpwiZmZjfP4XL6R55gd8Zn6OWjSxuG893mC_6dEybEcU8XpuTRGshBhLiXoCcOf8uVHnh7GOqQDyyIVFmINSK-f2YC1CI6skF6uGRpGgP7PeGYN5OIS1/s150/57.gif">
+							</div>
+                            <div class="textbox">
+                                <h3>좌측상단부터-51~55- 좌측하단부터-56~57-</h3>
+                            </div>
+                        </a>
+                    </li>
+					<li class="slideitem">
+                        <a>
+                            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEj6-tQF5H94GO7TvhQwdvwEegVUlns582nYwrTPV4tBQWwWKy9BotCjJps7ENRRkCHiLymN0dHhnQJ-T8C0nc5Xt3dMh2rgMfX7QsG1lnJmGljfV0jIgPcTAoGkE9E3UHDi7DJt0XEb5tPeRj-9mcxl-OVLrhsazgjqAu63-e4R7OMF5WRDnvNQZeis1cU-/s600/200.gif">
+                            <div class="textbox">
+                                <h3>기본형-2- 미니미-1- 적용한 이미지 입니다.</h3>
+                            </div>
+                        </a>
+                    </li>
+                </ul>
+                <div class="slide-button left-button" onclick="moveSlide('slide8', 'left');"></div>
+                <div class="slide-button right-button" onclick="moveSlide('slide8', 'right');"></div>
+                <ul class="slide-pagelist">
+                    <li><label for="slide8-1"></label></li>
+                    <li><label for="slide8-2"></label></li>
+                    <li><label for="slide8-3"></label></li>
+                    <li><label for="slide8-4"></label></li>
+                    <li><label for="slide8-5"></label></li>
+					<li><label for="slide8-6"></label></li>
+					<li><label for="slide8-7"></label></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+	<div class="page" id="page9">
+	<div class="notification">
+		<div id="announcement">접속기의 새로운 업데이트 사항 및 개발중인 사항을 공지합니다.</br>새로운 기능 상담 및 개발 가능합니다.</div>
+	</div>
+        <div class="title">업데이트 노트 (수정날짜 9/14)</div>
+        <font size=3>
+		⭕가능한 버전(버전별 업데이트 예정)⭕</br>
+		1.63~2.0</br>
+		</br>
+		⭕기본으로 적용되는 기능⭕</br>
+		구매시 운영자님의 블로그에서 모든 정보(아이피,포트,홈페이지 등)를 수정할 수 있습니다. 모든정보는 암호화되어있습니다. 평생접속기!</br>
+		공지 기능 - 접속기 실행시 운영자님께서 작성하신 공지화면이 팝업됩니다. 공지내용을 삭제하시면 공지화면이 사라집니다. 실시간 변경 가능합니다.</br>
+		3개 회선 접속 - 아이피 여러개 동시 이용가능, 연동망 구축하세요.</br>
+		자동 패치 기능 - 매 오픈시마다 클라이언트 새로묶지마세요. 여러개 패치파일도 순서대로 모두 패치가 진행됩니다.</br>
+		창모드 - 다양한 사이즈와 직접 해상도 설정이 가능합니다. 윈10~11 모두 이용가능. 창은 모두 이동이 가능합니다.</br>
+		다중클라 지원 - 1~10개까지 다중접속이 가능합니다. 필요하신경우 운영자용 접속기 추가로 무료제작해드립니다. </br>
+		접속정보를 읽어오는 블로그가 점검중이여도 마지막 접속한 정보를 기억하여 서버에 접속이 가능합니다.</br>
+		접속기 실행시 바탕화면에 바로가기 자동 생성됩니다.</br>
+	    게임가드 - 운영자님이 제보해주신 프로그램들 대부분 자동차단이 됩니다. 실시간 업데이트 가능합니다. 자동,핵,아이피검색프로그램 등 제보해주세요.</br>
+		커스텀 파일 실행 - 접속기 실행시 exe파일, dll파일이 동시 실행되도록 설정하실 수 있습니다. 기존에 쓰시던 다른 필요한 파일을 함께 설정해 보세요.</br>
+		접속기 자동 업데이트 - 접속기 옵션추가나 기본기능의 업데이트로 접속기를 업데이트 하고 싶을때 기존 접속기를 새 접속기로 자동 변경되도록 설정이 가능합니다.</br>
+		제작시 이미 제작된 공지창6개,회선창6개,해상도창3개의 이미지중 운영자님께서 직접 선택이 가능합니다. 접속기 아이콘 원하는 이미지로 제작 가능합니다.</br>
+		</br>
+		⭕추가 옵션 기능⭕</br>
+		접속기 이미지 - 동영상 및 커스텀으로 특별한 접속기 제작이 가능합니다. 백그라운드 뮤직, GIF 별도 추가 가능합니다.</br>
+        칼렉/길렉 - 칼렉 및 길렉을 없애드립니다. 팩소스 수정 없습니다.(옵션 추가후 무제한사용)</br>
+		리소스 암호화 - 클라이언트의 복제를 막을 수 있습니다. 암호화되어 다른사람의 복제 사용이 불가능합니다.(옵션 추가후 무제한사용)</br>
+		2GB 제한 해제 - Sprite.pak을 무제한 사용하실 수 있습니다. 이미지 추가하고 싶은데 용량부족으로 추가하지 못하셨던 분들 추천드립니다.(옵션 추가후 무제한사용)</br>
+		게임가드 플러스 - 게임가드에서 막지못한 악성 프로그램 및 유료 오토 프로그램들을 분석하여 매주 업데이트합니다. 서버와 접속기의 인증시스템을 적용합니다. 팩소스 수정필요!(매월 비용발생)-개발중!!</br>
+		</font></br>
+    </div>          
+</div>
+
+<script>
+    function moveSlide(slideName, direction) {
+        const radios = document.querySelectorAll(`input[name="${slideName}"]`);
+        let currentIndex = Array.from(radios).findIndex(radio => radio.checked);
+        if (direction === 'left') {
+            currentIndex = (currentIndex > 0) ? currentIndex - 1 : radios.length - 1;
+        } else {
+            currentIndex = (currentIndex < radios.length - 1) ? currentIndex + 1 : 0;
+        }
+        radios[currentIndex].checked = true;
+    }
+
+    function scrollToPage(pageId) {
+        const page = document.getElementById(pageId);
+        page.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
+
